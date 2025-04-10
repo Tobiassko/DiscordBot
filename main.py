@@ -57,22 +57,20 @@ async def on_message(message):
         if len(parts) > 1:
             user_id = int(parts[1].strip("<@!>"))
             user = await client.fetch_user(user_id)
-            await message.channel.send(
-                f"User Info:\n"
-                f"Username: {user.name}\n"
-                f"Discriminator: {user.discriminator}\n"
-                f"ID: {user.id}\n"
-                f"Avatar: {user.avatar.url if user.avatar else 'No avatar'}"
-            )
+            embed = discord.Embed(title="User Info", color=discord.Color.blue())
+            embed.add_field(name="Username", value=user.name, inline=False)
+            embed.add_field(name="Discriminator", value=f"#{user.discriminator}", inline=False)
+            embed.add_field(name="ID", value=user.id, inline=False)
+            embed.set_thumbnail(url=user.avatar.url if user.avatar else None)
+            await message.channel.send(embed=embed)
         else:
             user = message.author
-            await message.channel.send(
-                f"Your Info:\n"
-                f"Username: {user.name}\n"
-                f"Discriminator: {user.discriminator}\n"
-                f"ID: {user.id}\n"
-                f"Avatar: {user.avatar.url if user.avatar else 'No avatar'}"
-            )
+            embed = discord.Embed(title="Your Info", color=discord.Color.green())
+            embed.add_field(name="Username", value=user.name, inline=False)
+            embed.add_field(name="Discriminator", value=f"#{user.discriminator}", inline=False)
+            embed.add_field(name="ID", value=user.id, inline=False)
+            embed.set_thumbnail(url=user.avatar.url if user.avatar else None)
+            await message.channel.send(embed=embed)
     if message.content.startswith("!car"):
         parts = message.content.split()
         if len(parts) > 1 and parts[1]:
