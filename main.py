@@ -3,6 +3,27 @@ import os
 from dotenv import load_dotenv
 import random
 import requests  # Add this import for downloading files
+import json
+# Function to fetch Pokémon data from PokeAPI
+def download_poke_data(pokidex_entrie, wipe=False):
+    if wipe == True:
+        os.remove("pokemon\poke.json")
+    url = f"https://pokeapi.co/api/v2/pokemon/{pokidex_entrie}"
+    response = requests.get(url)
+    poke_info = response.json()
+    with open(os.path.join("pokemon", "poke.json"), "wb") as file:
+        file.write(json.dumps(poke_info, indent=4).encode('utf-8'))
+
+def get_poke_data(field):
+    with open(os.path.join("pokemon", "poke.json"), "r") as file:
+        data = json.load(file)
+        if field in data:
+            return data[field]
+        else:
+            print(f"Field '{field}' not found in Pokemon data")
+            return None
+
+meme = True
 
 # load Token from .env file
 load_dotenv()
@@ -27,13 +48,12 @@ baned_ids = [
 
 @client.event
 async def on_message(message):
-    """All the commands"""
+    """All the on message commands"""
     if message.author == client.user:
         return
     if message.author.id in baned_ids:
         return
     if message.content == "!" or message.content == "!help":
-  
         await message.channel.send(
 """**Here are all the commands**:
 
@@ -91,12 +111,73 @@ async def on_message(message):
         
         await message.channel.send(file=discord.File(local_filename))
         os.remove(local_filename)
-    if "money" in message.content.lower():
-        await message.channel.send(file=discord.File(os.path.join("mems\Mr. Krabs - Money.mp4")))
-    if "10" in message.content.lower():
-        await message.channel.send("https://www.youtube.com/watch?v=brZyXHO1N6Q")
-    if "baby" in message.content.lower():
-        await message.channel.send(file=discord.File(os.path.join("mems", "dust_baby.jpg")))
+    global meme
+    if meme == True:
+        if "money" in message.content.lower():
+            await message.channel.send(file=discord.File(os.path.join("mems\Mr. Krabs - Money.mp4")))
+        if "10" in message.content.lower():
+            await message.channel.send(file=discord.File("mems\yakuza-nishikiyama.gif"))
+        if "baby" in message.content.lower():
+            await message.channel.send(file=discord.File(os.path.join("mems", "dust_baby.jpg")))
+        if "591" in message.content:
+            download_poke_data(591)
+            embed = discord.Embed(title="pokemon", )
+            embed.add_field(name="Name:", value=str(get_poke_data("name")).capitalize())
+            embed.add_field(name="Id:", value=get_poke_data("id"))
+            if len(get_poke_data("types")) > 1:
+                    embed.add_field(name=f"Types:", value=(f"{str(get_poke_data("types")[0]["type"]["name"]).capitalize()} and {str(get_poke_data("types")[1]["type"]["name"]).capitalize()}"))
+            else:
+                embed.add_field(name="Type:", value=get_poke_data("types")[0]["type"]["name"])
+            if len(get_poke_data("abilities")) > 1:
+                embed.add_field(name="Ability", value=str(get_poke_data("abilities")[0]["ability"]["name"]).replace("-", " ").capitalize())
+                embed.add_field(name="Hidden Ability", value=str(get_poke_data("abilities")[1]["ability"]["name"]).replace("-", " ").capitalize())
+            else:
+                embed.add_field(name="Ability", value=str(get_poke_data("abilities")[0]["ability"]["name"]).replace("-", " ").capitalize())
+            embed.add_field(name="Hp:", value=get_poke_data("stats")[0]["base_stat"], inline=False)
+            embed.add_field(name="Attack:", value=get_poke_data("stats")[1]["base_stat"])
+            embed.add_field(name="Special Attack:", value=get_poke_data("stats")[3]["base_stat"])
+            embed.add_field(name="Defense:", value=get_poke_data("stats")[2]["base_stat"])
+            embed.add_field(name="Special Defense:", value=get_poke_data("stats")[4]["base_stat"])
+            embed.add_field(name="Speed:", value=get_poke_data("stats")[5]["base_stat"])
+            embed.set_thumbnail(url=get_poke_data("sprites")["front_default"])
+            await message.channel.send(embed=embed)
+            os.remove(os.path.join("pokemon", "poke.json"))
+    if message.content.startswith("!poke"):
+        parts = message.content.split()
+        if len(parts) > 1 and int(parts[1]) <= 1025:
+            download_poke_data(parts[1])
+        else:
+            download_poke_data(random.randint(1,1025))
+        embed = discord.Embed(title="pokemon", color=discord.Colour.blue())
+        embed.add_field(name="Name:", value=str(get_poke_data("name")).capitalize())
+        embed.add_field(name="Id:", value=get_poke_data("id"))
+        if len(get_poke_data("types")) > 1:
+                embed.add_field(name=f"Types:", value=(f"{str(get_poke_data("types")[0]["type"]["name"]).capitalize()} and {str(get_poke_data("types")[1]["type"]["name"]).capitalize()}"))
+        else:
+            embed.add_field(name="Type:", value=get_poke_data("types")[0]["type"]["name"])
+        if len(get_poke_data("abilities")) > 1:
+            embed.add_field(name="Ability", value=str(get_poke_data("abilities")[0]["ability"]["name"]).replace("-", " ").capitalize())
+            embed.add_field(name="Hidden Ability", value=str(get_poke_data("abilities")[1]["ability"]["name"]).replace("-", " ").capitalize())
+        else:
+            embed.add_field(name="Ability", value=str(get_poke_data("abilities")[0]["ability"]["name"]).replace("-", " ").capitalize())
+        embed.add_field(name="Hp:", value=get_poke_data("stats")[0]["base_stat"], inline=False)
+        embed.add_field(name="Attack:", value=get_poke_data("stats")[1]["base_stat"])
+        embed.add_field(name="Special Attack:", value=get_poke_data("stats")[3]["base_stat"])
+        embed.add_field(name="Defense:", value=get_poke_data("stats")[2]["base_stat"])
+        embed.add_field(name="Special Defense:", value=get_poke_data("stats")[4]["base_stat"])
+        embed.add_field(name="Speed:", value=get_poke_data("stats")[5]["base_stat"])
+        embed.set_thumbnail(url=get_poke_data("sprites")["front_default"])
+        await message.channel.send(embed=embed)
+        os.remove(os.path.join("pokemon", "poke.json"))
+    if message.content == "!meme" and message.author.id == 394213071381463040:
+        if meme == False:
+            await message.channel.send("Meme commands have been turned on")
+            meme = True
+        else:
+            await message.channel.send("Meme commands have been turned Off")
+            meme = False
+    elif message.content == "!meme" and message.author.id != 394213071381463040:
+        await message.author.send("Sorry, only the bot owner can use the command !meme")
 
     
 
