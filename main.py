@@ -20,10 +20,17 @@ async def on_ready():
     print(f"Bot is in {len(client.guilds)} servers")
     print(f"Bot is Ready!")
 
+baned_ids = [
+1359822255437119610,
+# 414451002217988097
+]
+
 @client.event
 async def on_message(message):
     """All the commands"""
     if message.author == client.user:
+        return
+    if message.author.id in baned_ids:
         return
     if message.content == "!" or message.content == "!help":
   
@@ -90,6 +97,9 @@ async def on_message(message):
         await message.channel.send(file=discord.File(os.path.join("mems\Mr. Krabs - Money.mp4")))
     if "10" in message.content.lower():
         await message.channel.send("https://www.youtube.com/watch?v=brZyXHO1N6Q")
+    if "baby" in message.content.lower():
+        await message.channel.send(file=discord.File(os.path.join("mems", "dust_baby.jpg")))
+
     
 
 if __name__ == "__main__":
