@@ -160,7 +160,7 @@ async def on_message(message):
         with open(local_filename, 'wb') as file:
             file.write(response.content)
         await message.channel.send(file=discord.File(local_filename))
-        os.remove(local_filename)
+        # os.remove(local_filename)
     global meme
     if meme == True:
         if "money" in message.content.lower():
@@ -268,7 +268,7 @@ async def on_message(message):
             elif get_poke_data("chain", "url")["species"]["name"] != None:
                 embed.add_field(name="Chain Evolution:", value=f"**{str(get_poke_data("chain", "url")["species"]["name"])}**")
         except IndexError:
-            print("No First Evolution")
+            pass
         for i in range(len(get_poke_data("flavor_text_entries","species"))):
             if get_poke_data("flavor_text_entries","species")[i]["language"]["name"] == "en":
                 embed.add_field(name="Descrition:", value=str(get_poke_data("flavor_text_entries","species")[i]["flavor_text"]))
@@ -315,30 +315,49 @@ async def on_message(message):
                     if row["Pokemon"] == dex_search:
                         dex_search = row["Dex"]
                 if row["Dex"] == dex_search:
+                    download_poke_data(parts[1])
                     found_pokemon = True
                     embed = discord.Embed(title="Bigchadguys+ Pokemon")
                     embed.add_field(name="Name", value=row["Pokemon"])
                     embed.add_field(name="Gen", value=row["Gen #"])
                     embed.add_field(name="Primary Type", value=row["Primary Type"])
-                    if "Light" in row and row["Light"] != "Any":
+                    if row["Light"] != "Any":
                         embed.add_field(name="Light", value=row["Light"])
-                    if "Time" in row and row["Time"] != "Any":
+                    if row["Time"] != "Any":
                         embed.add_field(name="Time", value=row["Time"])
-                    if "Weather" in row and row["Weather"] != "Any":
+                    if row["Weather"] != "Any":
                         embed.add_field(name="Weather", value=row["Weather"])
                     if row["Secondary Type"] != "-----":
                         embed.add_field(name="Secondary Type", value=row["Secondary Type"])
+                    download_url(get_poke_data("evolution_chain", "species")["url"])
+                    try:
+                        if get_poke_data("chain", "url")["evolves_to"][0]["evolves_to"][0]["species"]["name"] != None:
+                            embed.add_field(name="Chain Evolution:", value=f"**{str(get_poke_data("chain", "url")["species"]["name"]).capitalize()}** -> **{str(get_poke_data("chain", "url")["evolves_to"][0]["species"]["name"]).capitalize()}->{str(get_poke_data("chain", "url")["evolves_to"][0]["evolves_to"][0]["species"]["name"]).capitalize()}**")
+                        elif get_poke_data("chain", "url")["evolves_to"][0]["species"]["name"] != None:
+                            embed.add_field(name="Chain Evolution:", value=f"**{str(get_poke_data("chain", "url")["species"]["name"]).capitalize()}** -> **{str(get_poke_data("chain", "url")["evolves_to"][0]["species"]["name"]).capitalize()}**")
+                        elif get_poke_data("chain", "url")["species"]["name"] != None:
+                            embed.add_field(name="Chain Evolution:", value=f"**{str(get_poke_data("chain", "url")["species"]["name"])}**")
+                    except IndexError:
+                        pass
                     embed.add_field(name="Biomes", value=row["Biomes (Wiki)"])
+                    if row["Anti-Biomes (Wiki)"] != "":
+                        embed.add_field(name="Anti-Biomes", value=row["Anti-Biomes (Wiki)"])
+                    embed.add_field(name="Rarity", value=row["Rarity"])
                     embed.add_field(name="Spawn Weight", value=row["Spawn Weight"])
                     embed.add_field(name="Spawn Level", value=row["Level"])
                     if row["Sky"] != "Any":
                         embed.add_field(name="Sky", value=row["Sky"])
                     embed.add_field(name="Context", value=row["Context"])
-                    
-                    download_poke_data(parts[1])
+                    if row["Nearby Blocks"] != "":
+                        embed.add_field(name="Nearby Blocks", value=row["Nearby Blocks"])
+                    if row["Base Blocks"] != "":
+                        embed.add_field(name="Base Blocks", value=row["Base Blocks"])
+                    if row["Anti-Structures"] != "":
+                        embed.add_field(name="Anti Structures", value=row["Anti-Structures"])
+                    if row["Structures"] != "":
+                        embed.add_field(name="Structures", value=row["Structures"])
                     embed.set_thumbnail(url=get_poke_data("sprites")["front_default"])
                     await message.channel.send(embed=embed)
-                    break
             
             if not found_pokemon:
                 if download_poke_data(parts[1]) != False:
