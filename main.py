@@ -5,6 +5,8 @@ import random
 import requests  # Add this import for downloading files
 import json
 import csv
+import math
+
 # Function to fetch Pokémon data from PokeAPI
 def download_poke_data(pokidex_entrie, wipe=False):
     if wipe == True and os.path.exists(os.path.join("pokemon", "poke.json")):
@@ -142,6 +144,9 @@ async def on_message(message):
         embed.add_field(name="Username", value=user.name, inline=False)
         embed.add_field(name="Discriminator", value=f"#{user.discriminator}", inline=False)
         embed.add_field(name="ID", value=user.id, inline=False)
+        with open("User_data.json", "r") as file:
+            user_data = json.load(file)
+            embed.add_field(name="Level", value=user_data[str(message.author.id)]["level"])
         embed.set_thumbnail(url=user.avatar.url if user.avatar else None)
         await message.channel.send(embed=embed)
     if message.content.startswith("!car"):
@@ -375,9 +380,47 @@ async def on_message(message):
                                 if row["Dex"] == dex_search:
                                     await message.channel.send(f"Pre-evolution **{str(get_poke_data("name")).capitalize()}** found in BCG+ database")
                                     break
-                                
-                else:
-                    await message.channel.send(f'"{parts[1]}" is probably not a pokemon')
+    
+    with open("User_data.json", "r") as file:
+        try:
+            user_data = json.load(file)
+        except json.JSONDecodeError:
+            user_data = {}
+
+    user_id = message.author.id
+    if str(user_id) not in user_data:
+        user_data[str(user_id)] = {"username": "","xp": 0, "level": 1}
+
+    user_data[str(user_id)]["username"] = message.author.name
+    user_data[str(user_id)]["xp"] += 1
+    if user_data[str(user_id)]["xp"] >= 4 * math.sqrt(user_data[str(user_id)]["level"]):
+        user_data[str(user_id)]["xp"] = 0
+        user_data[str(user_id)]["level"] += 1
+
+    with open("User_data.json", "w") as file:
+        json.dump(user_data, file, indent=4)
+    
+    if message.content.startswith("!xp"):
+        parts = message.content.split()
+        user_id= message.author.id
+        await message.channel.send(f"Xp set to {int(parts[1])}")
+        print("ssss")
+        with open("User_data.json", "r") as file:
+            user_data = json.load(file)
+            user_data[str(user_id)]["xp"] = int(parts[1])
+        with open("User_data.json", "w") as file:
+            json.dump(user_data, file, indent=4)
+    if message.content.startswith("!level"):
+        parts = message.content.split()
+        user_id= message.author.id
+        await message.channel.send(f"Level set to {int(parts[1])}")
+        print("ssss")
+        with open("User_data.json", "r") as file:
+            user_data = json.load(file)
+            user_data[str(user_id)]["level"] = int(parts[1])
+        with open("User_data.json", "w") as file:
+            json.dump(user_data, file, indent=4)
+        
             
 
 
