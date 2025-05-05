@@ -149,6 +149,9 @@ async def on_message(message):
             embed.add_field(name="Level", value=user_data[str(message.author.id)]["level"])
         embed.set_thumbnail(url=user.avatar.url if user.avatar else None)
         await message.channel.send(embed=embed)
+    # ------------------------------
+    # - Car command
+    # ------------------------------
     if message.content.startswith("!car"):
         parts = message.content.split()
         if len(parts) > 1 and parts[1]:
@@ -176,7 +179,7 @@ async def on_message(message):
             await message.channel.send(file=discord.File(os.path.join("mems", "dust_baby.jpg")))
         if "591" in message.content:
             download_poke_data(591)
-            embed = discord.Embed(title="pokemon", )
+            embed = discord.Embed(title="pokemon")
             embed.add_field(name="Name:", value=str(get_poke_data("name")).capitalize())
             embed.add_field(name="Id:", value=get_poke_data("id"))
             if len(get_poke_data("types")) > 1:
@@ -219,6 +222,9 @@ async def on_message(message):
                 # Add a small delay to prevent rate limiting
                 if send_count > 1:
                     pass
+    # ------------------------------
+    # - Pokemon command
+    # ------------------------------
     if message.content.startswith("!poke"):
         parts = message.content.split()
         if len(parts) > 1:
@@ -290,6 +296,10 @@ async def on_message(message):
             meme = False
     elif message.content == "!meme" and message.author.id != 394213071381463040:
         await message.author.send("Sorry, only the bot owner can use the command !meme")
+    # ------------------------------
+    # - BCG+ commands
+    # ------------------------------
+    
     if message.content.startswith("!bcg"):
         parts = message.content.split()
         if len(parts) > 1:
@@ -381,21 +391,24 @@ async def on_message(message):
                                     await message.channel.send(f"Pre-evolution **{str(get_poke_data("name")).capitalize()}** found in BCG+ database")
                                     break
     
+    # ------------------------------
+    # - User data system
+    # ------------------------------
     with open("User_data.json", "r") as file:
         try:
             user_data = json.load(file)
         except json.JSONDecodeError:
             user_data = {}
 
-    user_id = message.author.id
-    if str(user_id) not in user_data:
-        user_data[str(user_id)] = {"username": "","xp": 0, "level": 1}
+    user_id = str(message.author.id)
+    if user_id not in user_data:
+        user_data[user_id] = {"username": message.author.name,"xp": 0, "level": 1,"coins": 100}
 
-    user_data[str(user_id)]["username"] = message.author.name
-    user_data[str(user_id)]["xp"] += 1
-    if user_data[str(user_id)]["xp"] >= 4 * math.sqrt(user_data[str(user_id)]["level"]):
-        user_data[str(user_id)]["xp"] = 0
-        user_data[str(user_id)]["level"] += 1
+    user_data[user_id]["xp"] += 1
+    # level up
+    if user_data[user_id]["xp"] >= 4 * math.sqrt(user_data[user_id]["level"]):
+        user_data[user_id]["xp"] = 0
+        user_data[user_id]["level"] += 1
 
     with open("User_data.json", "w") as file:
         json.dump(user_data, file, indent=4)
@@ -407,7 +420,7 @@ async def on_message(message):
         print("ssss")
         with open("User_data.json", "r") as file:
             user_data = json.load(file)
-            user_data[str(user_id)]["xp"] = int(parts[1])
+            user_data[user_id]["xp"] = int(parts[1])
         with open("User_data.json", "w") as file:
             json.dump(user_data, file, indent=4)
     if message.content.startswith("!level"):
@@ -417,12 +430,29 @@ async def on_message(message):
         print("ssss")
         with open("User_data.json", "r") as file:
             user_data = json.load(file)
-            user_data[str(user_id)]["level"] = int(parts[1])
+            user_data[user_id]["level"] = int(parts[1])
         with open("User_data.json", "w") as file:
             json.dump(user_data, file, indent=4)
-        
-            
+    # ------------------------------
+    # - Slot machine command
+    # ------------------------------
+    if message.content.startswith("!slots"):
+        embed = discord.Embed(title="Slots 🎰")
+        choices = ["⭐", "👽", "😈", "🤡"]
+        choice_1 = random.choice(choices)
+        choice_2 = random.choice(choices)
+        choice_3 = random.choice(choices)
 
+        embed.add_field(name="Result", value=f"{choice_1} | {choice_2} | {choice_3}")
+        embed.add_field(name="Coins:", value=f"{user_data[user_id]["coins"]}", inline=False)
+        if choice_1 == choice_2 == choice_3:
+            pass
+        elif choice_1 == choice_2 or choice_2 == choice_3 or choice_3 == choice_1:
+            pass
+        else:
+            pass
+        await message.channel.send(embed=embed)
+       
 
 if __name__ == "__main__":
     print("Starting bot...")
