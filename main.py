@@ -133,22 +133,6 @@ async def on_message(message):
     if message.content == "!rand":
         await message.channel.send(f"Here is a random number:{random.randint(0,1000)}")
     
-    if message.content.startswith("!user"):
-        parts = message.content.split()
-        if len(parts) > 1:
-            user_id = int(parts[1].strip("<@!>"))
-            user = await client.fetch_user(user_id)
-        else:
-            user = message.author
-        embed = discord.Embed(title="User Info", color=discord.Color.blue())
-        embed.add_field(name="Username", value=user.name, inline=False)
-        embed.add_field(name="Discriminator", value=f"#{user.discriminator}", inline=False)
-        embed.add_field(name="ID", value=user.id, inline=False)
-        with open("User_data.json", "r") as file:
-            user_data = json.load(file)
-            embed.add_field(name="Level", value=user_data[str(message.author.id)]["level"])
-        embed.set_thumbnail(url=user.avatar.url if user.avatar else None)
-        await message.channel.send(embed=embed)
     # ------------------------------
     # - Car command
     # ------------------------------
@@ -437,20 +421,65 @@ async def on_message(message):
     # - Slot machine command
     # ------------------------------
     if message.content.startswith("!slots"):
+        parts = message.content.split()
         embed = discord.Embed(title="Slots 🎰")
-        choices = ["⭐", "👽", "😈", "🤡"]
-        choice_1 = random.choice(choices)
-        choice_2 = random.choice(choices)
-        choice_3 = random.choice(choices)
+        if len(parts) == 1:
+            embed.add_field(name="Insturctions", value=f"Do !slots [number] to bet a that amount")
+            embed.add_field(name="Coins:", value=f"{user_data[user_id]["coins"]}", inline=False)
+        if len(parts) == 2:
+            if int(parts[1]) > user_data[user_id]["coins"]:
+                embed.add_field(name="", value=f"Your missing {int(parts[1])-int(user_data[user_id]["coins"])} coins")
+            else:
+                bet = parts[1]
+                choices = ["⭐", "👽", "😈", "🤡", "🍒", "🍋", "💎", "7️⃣", "🎰", "🍀"]
+                choice_1 = random.choice(choices)
+                choice_2 = random.choice(choices)
+                choice_3 = random.choice(choices)
 
-        embed.add_field(name="Result", value=f"{choice_1} | {choice_2} | {choice_3}")
-        embed.add_field(name="Coins:", value=f"{user_data[user_id]["coins"]}", inline=False)
-        if choice_1 == choice_2 == choice_3:
-            pass
-        elif choice_1 == choice_2 or choice_2 == choice_3 or choice_3 == choice_1:
-            pass
+                if choice_1 == choice_2 == choice_3:
+                    embed.add_field(name="Result", value=f"{choice_1} | {choice_2} | {choice_3}")
+                    embed.add_field(name="Coins:", value=f"{int(user_data[user_id]["coins"])+(int(bet)*10)}", inline=False)
+                    embed.add_field(name="Jackpot", value=f":{int(bet)*10}")
+                    user_data[user_id]["coins"] += int(bet)*10
+                elif choice_1 == choice_2 or choice_2 == choice_3 or choice_3 == choice_1:
+                    embed.add_field(name="Result", value=f"{choice_1} | {choice_2} | {choice_3}")
+                    embed.add_field(name="Coins:", value=f"{int(user_data[user_id]["coins"])+(int(bet)*4)}", inline=False)
+                    embed.add_field(name="Win", value=f":{int(bet)*4}")
+                    user_data[user_id]["coins"] += int(bet)*4
+                else:
+                    embed.add_field(name="Result", value=f"{choice_1} | {choice_2} | {choice_3}")
+                    embed.add_field(name="Coins:", value=f"{int(user_data[user_id]["coins"])-int(bet)}", inline=False)
+                    user_data[user_id]["coins"] -= int(bet)
+                    embed.add_field(name="Lost", value=int(bet))
+                with open("User_data.json", "w") as file:
+                    json.dump(user_data, file, indent=4)
+        await message.channel.send(embed=embed)
+    # ------------------------------
+    # - mining command
+    # ------------------------------
+    if message.channel.name == "mine":
+        await message.channel.send("sup")
+
+
+    # ------------------------------
+    # - User info command
+    # ------------------------------
+    if message.content.startswith("!user"):
+        parts = message.content.split()
+        if len(parts) > 1:
+            user_id = int(parts[1].strip("<@!>"))
+            user = await client.fetch_user(user_id)
         else:
-            pass
+            user = message.author
+        embed = discord.Embed(title="User Info", color=discord.Color.blue())
+        embed.add_field(name="Username", value=user.name, inline=False)
+        embed.add_field(name="Discriminator", value=f"#{user.discriminator}", inline=False)
+        embed.add_field(name="Coins", value=f"{int(user_data[user_id]["coins"])}", inline=False)
+        embed.add_field(name="ID", value=user.id, inline=False)
+        with open("User_data.json", "r") as file:
+            user_data = json.load(file)
+            embed.add_field(name="Level", value=user_data[str(message.author.id)]["level"])
+        embed.set_thumbnail(url=user.avatar.url if user.avatar else None)
         await message.channel.send(embed=embed)
        
 
