@@ -572,20 +572,66 @@ async def on_message(message):
                 while user_id in auto_mining:
                     if user_id not in mining_users:
                         mining_users.add(user_id)
-                        await asyncio.sleep(random.randint(1, 2))
                         resource_names = list(resources.keys())
                         resource_weights = [resources[name]["weight"] for name in resource_names]
                         found = random.choices(resource_names, weights=resource_weights, k=1)[0]
                         # Update user's inventory
-                        print(f"{message.author.id} found {found}")
+                        print(f"{user_id} found {found}")
                         if found in user_data[str(user_id)]["inventory"]:
                             user_data[str(user_id)]["inventory"][found] += 1
                         else:
                             user_data[str(user_id)]["inventory"][found] = 1
                         with open("User_data.json", "w") as file:
                             json.dump(user_data, file, indent=4)
+                        await asyncio.sleep(random.randint(30, 120))
+                        if random.randint(1, 25) == 1:  # Make strike less frequent
+                            strike_reasons = [
+                                "demands of more coffee breaks",
+                                "becoming adults",
+                                "protesting against safety(make it unsafe)",
+                                "insisting on better rock quality",
+                                "complains about the darkness in the mines",
+                                "complains about the brightness in the mines",
+                                "demands of dental insurance (mining is hard on teeth)",
+                                "them finding a better boss(he has sunglasses)",
+                                "them wanting weekends off to play tag",
+                                "insisting on installing elevators in the mines",
+                                "demands for better ventilation systems",
+                                "them all becoming pregnant(inclueding the men)",
+                                "demands of actual tools",
+                                "local gang activity in the mines",
+                                '"idk man it got boring"',
+                                "demanding WiFi in the mines",
+                                "wanting a monthly pizza party underground",
+                                "them claiming the rocks are too hard to mine",
+                                "forming a mine choir and requesting practice time",
+                                "discovering a secret suchi resturant in the mines",
+                                "collective decision to become professional dwarfs",
+                                "starting a rock fashion show",
+                                "everyone developing a mining allergy",
+                                "demanding spa facilities for 'post-mining relaxation'",
+                                "unionizing with the local mole people",
+                                "finding out mining doesn't actually involve crafting",
+                                "not getting blacklung(they wanted it)",
+                                "them solving world hunger",
+                                "accidentally mining into someone's basement",
+                                "them finding out their wives have a gay boyfriend(its all the same guy)",
+                                "becouse there wives boyfriend's wanted to hang out(He's verry cool)"
+                            ]
+                            await message.channel.send(
+                                f"⚠️ **STRIKE ALERT!** ⚠️\n{str(user_data[str(user_id)]['username']).capitalize()} Your miners have gone on strike due to {random.choice(strike_reasons)}. Automining temporarily paused!"
+                            )
+                            auto_mining.remove(user_id)
                         mining_users.remove(user_id)
+                    else:
+                        await asyncio.sleep(1)  # <--- Add this line to yield control if already mining
             asyncio.create_task(auto_mine_task(message.author.id))
+        elif message.author.id in auto_mining:
+            print(f"{message.author.id} removed from Automining")
+            auto_mining.remove(message.author.id)
+            embed = discord.Embed(title="Automining")
+            embed.add_field(name="Mode", value="Off")
+            await message.channel.send(embed=embed)
     # ------------------------------
     # - User info command
     # ------------------------------
