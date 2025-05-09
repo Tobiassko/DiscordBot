@@ -8,6 +8,11 @@ import csv
 import math
 import asyncio
 
+async def printloop():
+    print("yo")
+    asyncio.wait(100)
+printloop()
+
 # Function to fetch Pokémon data from PokeAPI
 def download_poke_data(pokidex_entrie, wipe=False):
     if wipe == True and os.path.exists(os.path.join("pokemon", "poke.json")):
