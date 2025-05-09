@@ -6,6 +6,7 @@ import requests  # Add this import for downloading files
 import json
 import csv
 import math
+import asyncio
 
 # Function to fetch Pokémon data from PokeAPI
 def download_poke_data(pokidex_entrie, wipe=False):
@@ -84,7 +85,8 @@ except IndexError:
 
 
 meme = True
-
+mining_users = set()
+auto_mining = set()
 # load Token from .env file
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
@@ -93,6 +95,7 @@ intents = discord.Intents.default()
 intents.message_content = True
 
 client = discord.Client(intents=intents)
+
 
 @client.event
 async def on_ready():
@@ -386,7 +389,10 @@ async def on_message(message):
 
     user_id = str(message.author.id)
     if user_id not in user_data:
-        user_data[user_id] = {"username": message.author.name,"xp": 0, "level": 1,"coins": 100}
+        user_data[user_id] = {"username": message.author.name, "xp": 0, "level": 1, "coins": 100, "inventory": {}}
+    # Ensure inventory key exists for all users
+    if "inventory" not in user_data[user_id]:
+        user_data[user_id]["inventory"] = {}
 
     user_data[user_id]["xp"] += 1
     # level up
@@ -397,11 +403,10 @@ async def on_message(message):
     with open("User_data.json", "w") as file:
         json.dump(user_data, file, indent=4)
     
-    if message.content.startswith("!xp"):
+    if message.content.startswith("!xp") and message.author.id == 394213071381463040:
         parts = message.content.split()
         user_id= message.author.id
         await message.channel.send(f"Xp set to {int(parts[1])}")
-        print("ssss")
         with open("User_data.json", "r") as file:
             user_data = json.load(file)
             user_data[user_id]["xp"] = int(parts[1])
@@ -455,12 +460,132 @@ async def on_message(message):
                     json.dump(user_data, file, indent=4)
         await message.channel.send(embed=embed)
     # ------------------------------
-    # - mining command
+    # - mining system
     # ------------------------------
-    if message.channel.name == "mine":
-        await message.channel.send("sup")
+    resources = {
+        "Stone": {"value": 5, "weight": 35},
+        "Coal": {"value": 10, "weight": 25},
+        "Iron": {"value": 25, "weight": 15},
+        "Copper": {"value": 30, "weight": 10},
+        "Gold": {"value": 50, "weight": 5},
+        "Silver": {"value": 40, "weight": 5},
+        "Emerald": {"value": 75, "weight": 2},
+        "Ruby": {"value": 80, "weight": 1},
+        "Sapphire": {"value": 85, "weight": 1},
+        "Diamond": {"value": 100, "weight": 0.5},
+        "Platinum": {"value": 120, "weight": 0.3},
+        "Ancient Debris": {"value": 150, "weight": 0.2}
+    }
+    if message.channel.name == "the-mine" and message.content == "!mine" and not message.author.id in auto_mining:
+    
+        if "inventory" not in user_data[user_id]:
+            user_data[user_id]["inventory"] = {}
+            with open("User_data.json", "w") as file:
+                    json.dump(user_data, file, indent=4)
+        if message.author.id not in mining_users:
+            mining_users.add(message.author.id)
+            for i in range(random.randint(3,10)):
+                embed = discord.Embed(title="Miner")
+                embed.add_field(name="", value=f"Progress: .")
+                if i == 0:
+                    sent_message = await message.channel.send(embed=embed)
+                else:
+                    sent_message = await sent_message.edit(embed=embed)
+                await asyncio.sleep(1)
+                embed = discord.Embed(title="Miner")
+                embed.add_field(name="", value=f"Progress: ..")
+                sent_message = await sent_message.edit(embed=embed)
+                await asyncio.sleep(1)
+                embed = discord.Embed(title="Miner")
+                embed.add_field(name="", value=f"Progress: ...")
+                sent_message = await sent_message.edit(embed=embed)
+                await asyncio.sleep(1)
+            # Pick a random resource based on its weight
+            resource_names = list(resources.keys())
+            resource_weights = [resources[name]["weight"] for name in resource_names]
+            found = random.choices(resource_names, weights=resource_weights, k=1)[0]
+            embed = discord.Embed(title="Miner")
+            embed.add_field(name="Result!", value=f"You found a {found} Worth {resources[found]["value"]}$")
+            sent_message = await sent_message.edit(embed=embed)
+            if found in user_data[user_id]["inventory"]:
+                user_data[user_id]["inventory"][found] += 1
+            else:
+                user_data[user_id]["inventory"][found] = 1
+            with open("User_data.json", "w") as file:
+                    json.dump(user_data, file, indent=4)
+            mining_users.remove(message.author.id)
+        else:
+            print(f"{message.author.name} is already mining")
+    elif message.author.id in auto_mining and message.content == "!mine":
+        await message.channel.send("You are currently automining, please disable automining before entering the mine")
+    if message.channel.name == "the-mine" and message.content == "!inventory": 
+        embed = discord.Embed(title="Inventory")
+        if not user_data[user_id]["inventory"]:
+            embed.add_field(name="Empty", value="Your inventory is empty.")
+        else:
+            for resource, count in user_data[user_id]["inventory"].items():
+                embed.add_field(name=resource, value=str(count))
+        # Calculate total worth of inventory items
+        total_worth = sum(resources[resource]["value"] * count for resource, count in user_data[user_id]["inventory"].items())
+        embed.add_field(name="Total Worth", value=f"{total_worth} coins")
+        await message.channel.send(embed=embed)
+    if message.channel.name == "the-mine" and message.content == "!sell": 
+        embed = discord.Embed(title="Sell Resources")
+        
+        if not user_data[user_id]["inventory"]:
+            embed.add_field(name="No Items", value="Your inventory is empty. Nothing to sell.")
+        else:
+            # Calculate total value of all items
+            total_value = 0
+            items_sold = []
+            
+            for resource, count in user_data[user_id]["inventory"].items():
+                value = resources[resource]["value"] * count
+                total_value += value
+                items_sold.append(f"{count} {resource} for {value} coins")
+            
+            # Add value to user's coins
+            user_data[user_id]["coins"] += total_value
+            
+            # Create the embed with sold items info
+            embed.add_field(name="Items Sold", value="\n".join(items_sold), inline=False)
+            embed.add_field(name="Total Earnings", value=f"{total_value} coins", inline=False)
+            embed.add_field(name="New Balance", value=f"{user_data[user_id]['coins']} coins", inline=False)
+            
+            # Clear inventory
+            user_data[user_id]["inventory"] = {}
+            
+            # Save updated user data
+            with open("User_data.json", "w") as file:
+                json.dump(user_data, file, indent=4)
+        
+        await message.channel.send(embed=embed)
+    if message.channel.name == "the-mine" and message.content == "!automine":
+        if message.author.id not in auto_mining:
+            print(f"{message.author.id} added to Automining")
+            auto_mining.add(message.author.id)
+            embed = discord.Embed(title="Automining")
+            embed.add_field(name="Mode", value="On")
+            await message.channel.send(embed=embed)
 
-
+            async def auto_mine_task(user_id):
+                while user_id in auto_mining:
+                    if user_id not in mining_users:
+                        mining_users.add(user_id)
+                        await asyncio.sleep(random.randint(1, 2))
+                        resource_names = list(resources.keys())
+                        resource_weights = [resources[name]["weight"] for name in resource_names]
+                        found = random.choices(resource_names, weights=resource_weights, k=1)[0]
+                        # Update user's inventory
+                        print(f"{message.author.id} found {found}")
+                        if found in user_data[str(user_id)]["inventory"]:
+                            user_data[str(user_id)]["inventory"][found] += 1
+                        else:
+                            user_data[str(user_id)]["inventory"][found] = 1
+                        with open("User_data.json", "w") as file:
+                            json.dump(user_data, file, indent=4)
+                        mining_users.remove(user_id)
+            asyncio.create_task(auto_mine_task(message.author.id))
     # ------------------------------
     # - User info command
     # ------------------------------
@@ -473,12 +598,13 @@ async def on_message(message):
             user = message.author
         embed = discord.Embed(title="User Info", color=discord.Color.blue())
         embed.add_field(name="Username", value=user.name, inline=False)
-        embed.add_field(name="Discriminator", value=f"#{user.discriminator}", inline=False)
-        embed.add_field(name="Coins", value=f"{int(user_data[user_id]["coins"])}", inline=False)
+        if user.discriminator == 0:
+            embed.add_field(name="Discriminator", value=f"#{user.discriminator}", inline=False)
         embed.add_field(name="ID", value=user.id, inline=False)
         with open("User_data.json", "r") as file:
             user_data = json.load(file)
-            embed.add_field(name="Level", value=user_data[str(message.author.id)]["level"])
+            embed.add_field(name="Level", value=user_data[str(user_id)]["level"])
+        embed.add_field(name="Coins", value=f"{(user_data[str(user_id)]["coins"])}", inline=False)
         embed.set_thumbnail(url=user.avatar.url if user.avatar else None)
         await message.channel.send(embed=embed)
        
