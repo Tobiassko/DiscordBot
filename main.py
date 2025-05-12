@@ -8,10 +8,6 @@ import csv
 import math
 import asyncio
 
-async def printloop():
-    print("yo")
-    asyncio.wait(100)
-printloop()
 
 # Function to fetch Pokémon data from PokeAPI
 def download_poke_data(pokidex_entrie, wipe=False):
@@ -481,7 +477,7 @@ async def on_message(message):
         "Platinum": {"value": 120, "weight": 0.3},
         "Ancient Debris": {"value": 150, "weight": 0.2}
     }
-    if message.channel.name == "the-mine" and message.content == "!mine" and not message.author.id in auto_mining:
+    if message.channel.name == "the-mine" and message.content == "!mine".lower() and not message.author.id in auto_mining:
     
         if "inventory" not in user_data[user_id]:
             user_data[user_id]["inventory"] = {}
@@ -523,7 +519,7 @@ async def on_message(message):
             print(f"{message.author.name} is already mining")
     elif message.author.id in auto_mining and message.content == "!mine":
         await message.channel.send("You are currently automining, please disable automining before entering the mine")
-    if message.channel.name == "the-mine" and message.content == "!inventory": 
+    if message.channel.name == "the-mine" and message.content == "!inventory" and not message.author.id in auto_mining: 
         embed = discord.Embed(title="Inventory")
         if not user_data[user_id]["inventory"]:
             embed.add_field(name="Empty", value="Your inventory is empty.")
@@ -534,7 +530,9 @@ async def on_message(message):
         total_worth = sum(resources[resource]["value"] * count for resource, count in user_data[user_id]["inventory"].items())
         embed.add_field(name="Total Worth", value=f"{total_worth} coins")
         await message.channel.send(embed=embed)
-    if message.channel.name == "the-mine" and message.content == "!sell": 
+    elif message.author.id in auto_mining and message.content == "!inventory".lower():
+        await message.channel.send("Please disable autominer before checking inventory")
+    if message.channel.name == "the-mine" and message.content == "!sell".lower() and not message.author.id in auto_mining: 
         embed = discord.Embed(title="Sell Resources")
         
         if not user_data[user_id]["inventory"]:
@@ -565,6 +563,8 @@ async def on_message(message):
                 json.dump(user_data, file, indent=4)
         
         await message.channel.send(embed=embed)
+    elif message.author.id in auto_mining and message.content == "!sell".lower():
+        await message.channel.send("Please disable autominer before selling")
     if message.channel.name == "the-mine" and message.content == "!automine":
         if message.author.id not in auto_mining:
             print(f"{message.author.id} added to Automining")
