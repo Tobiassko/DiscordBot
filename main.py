@@ -120,15 +120,32 @@ async def on_message(message):
         return
     if message.content == "!" or message.content == "!help":
         await message.channel.send(
-"""**Here are all the commands**:
+    """
+    
+    📜 **!help** - Displays this list of commands.
+    ✅ **!test** - Checks if the bot is operational.
+    🏃 **!ran** - Sends an emoji of a man running.
+    🎲 **!rand** - Generates a random number between 1 and 1000.
+    🚗 **!car [number]** - Sends a video of a car (optional: specify car number).
 
-📜 **!help** - Displays this list of commands.
-✅ **!test** - Checks if the bot is operational.
-🏃 **ran** - Sends an emoji of a man running.
-🎲 **rand** - Generates a random number between 1 and 1000.
-🚗 **!car** - Sends a video of a car from awesomecars.neocities.org.
-👤 **!user** - Fetches your information or details of a specific user.
-"""
+    🎮 **Games & Economy**:
+    💰 **!slots [amount]** - Play slots with your coins.
+    💎 **!mine** - Mine for resources in the-mine channel.
+    📦 **!inventory** - Check your mined resources in the-mine channel.
+    💵 **!sell** - Sell all your mined resources in the-mine channel.
+    ⚒️ **!automine** - Toggle automatic mining in the-mine channel.
+    🛒 **!store** - buy things(unimplemented)
+
+    🔍 **Information**:
+    👤 **!user [mention]** - Show user info (optional: mention someone).
+    🔍 **!poke [name/number]** - Show information about a Pokémon.
+    🌍 **!bcg [name/number]** - Show BCG+ specific Pokémon info.
+
+    🔧 **Admin Commands**:
+    🎭 **!meme** - Toggle meme responses.
+    📊 **!xp [amount]** - Set your XP.
+    📈 **!level [amount]** - Set your level.
+    """
         )
     if message.content == "!test":
         await message.channel.send("Bot is working!")
@@ -413,7 +430,9 @@ async def on_message(message):
             user_data[user_id]["xp"] = int(parts[1])
         with open("User_data.json", "w") as file:
             json.dump(user_data, file, indent=4)
-    if message.content.startswith("!level"):
+    elif message.content.startswith("!xp") and not message.author.id == 394213071381463040:
+        await message.channel.send("This command is only accessible to admins")
+    if message.content.startswith("!level") and message.author.id == 394213071381463040:
         parts = message.content.split()
         user_id= message.author.id
         await message.channel.send(f"Level set to {int(parts[1])}")
@@ -423,6 +442,8 @@ async def on_message(message):
             user_data[user_id]["level"] = int(parts[1])
         with open("User_data.json", "w") as file:
             json.dump(user_data, file, indent=4)
+    elif message.content.startswith("!level") and not message.author.id == 394213071381463040:
+        await message.channel.send("This command is only accessible to admins")
     # ------------------------------
     # - Slot machine command
     # ------------------------------
